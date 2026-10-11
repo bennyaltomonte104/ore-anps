@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tracker Ore Lavorative</title>
+  <style>
+    :root{
+      --green:#009246;
+      --white:#ffffff;
+      --red:#ce2b37;
+      --dark:#122232;
+      --muted:#eef3f8;
+      --panel: rgba(255,255,255,0.76);
+      --shadow: 0 12px 28px rgba(0,0,0,0.18);
+      --success:#1d9b5d;
+      --danger:#d62839;
+    }
+
+    * { box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--dark);
+      background:
+        linear-gradient(rgba(255,255,255,0.3), rgba(255,255,255,0.3)),
+        linear-gradient(to right, rgba(0,146,70,0.7) 0 33.33%, rgba(255,255,255,0.7) 33.33% 66.66%, rgba(206,43,55,0.7) 66.66% 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .app-shell{
+      width:min(1100px, 100%);
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,0.35);
+      border-radius:22px;
+      box-shadow: var(--shadow);
+      padding:20px;
+    }
+
+    .auth-box, .dashboard{
+      display:none;
+      background: var(--panel);
+      border-radius:18px;
+      padding:24px;
+      box-shadow: inset 0 0 0 1px rgba(18,34,50,0.06);
+    }
+
+    .visible{ display:block; }
+
+    .container{
+      width:min(900px, 100%);
+      margin:0 auto;
+    }
+
+    h1, h2, h3{
+      margin-top:0;
+      color: var(--dark);
+    }
+
+    .auth-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+    }
+
+    .card{
+      background: rgba(255,255,255,0.28);
+      border:1px solid rgba(18,34,50,0.08);
+      border-radius:14px;
+      padding:18px;
+    }
+
+    form{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      font-size:0.9rem;
+      font-weight:600;
+      color:#243a4a;
+      gap:6px;
+    }
+
+    input, button, select{
+      border-radius:10px;
+      border:1px solid rgba(18,34,50,0.12);
+      padding:12px 14px;
+      font-size:1rem;
+    }
+
+    input:focus, select:focus{
+      outline:2px solid rgba(0,146,70,0.2);
+      border-color: rgba(0,146,70,0.6);
+    }
+
+    button{
+      background: linear-gradient(135deg, var(--green), #0c7c4d);
+      color:white;
+      border:none;
+      font-weight:700;
+      cursor:pointer;
+      transition: transform 0.2s ease;
+    }
+
+    button:hover{ transform: translateY(-1px); }
+
+    .secondary{
+      background: linear-gradient(135deg, #405d78, #2b465d);
+    }
+
+    .danger{
+      background: linear-gradient(135deg, var(--red), #b4232a);
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+
+    .user-badge{
+      background: rgba(0,146,70,0.12);
+      color: var(--green);
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:0.85rem;
+    }
+
+    .dashboard-grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap:20px;
+    }
+
+    .entry-list, .summary-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .entry-item{
+      border:1px solid rgba(18,34,50,0.08);
+      background: rgba(255,255,255,0.32);
+      border-radius:12px;
+      padding:12px 14px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .tiny{
+      font-size:0.8rem;
+      color:#45617a;
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:7px 10px;
+      background: rgba(0,146,70,0.12);
+      border-radius:999px;
+      font-size:0.82rem;
+      font-weight:700;
+      color: var(--green);
+    }
+
+    .error{
+      color: var(--danger);
+      background: rgba(214,40,57,0.08);
+      border:1px solid rgba(214,40,57,0.16);
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:600;
+      display:none;
+    }
+
+    .error.show{ display:block; }
+
+    .success{
+      color: var(--success);
+      background: rgba(29,155,93,0.08);
+      border:1px solid rgba(29,155,93,0.18);
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:600;
+      display:none;
+    }
+
+    .success.show{ display:block; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.12);
+      border-radius:12px;
+      overflow:hidden;
+    }
+
+    th, td{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(18,34,50,0.09);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      background: rgba(18,34,50,0.04);
+    }
+
+    .admin-controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .hidden{ display:none !important; }
+
+    @media(max-width: 820px){
+      .auth-grid, .dashboard-grid{
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="authView" class="auth-box visible">
+      <div class="container">
+        <div class="auth-grid">
+          <div class="card">
+            <h2>Registrazione</h2>
+            <form id="registerForm">
+              <label>
+                Email
+                <input type="email" id="registerEmail" placeholder="tuo@email.it" required />
+              </label>
+              <label>
+                Password
+                <input type="password" id="registerPassword" placeholder="Password" required />
+              </label>
+              <button type="submit">Registrati</button>
+              <div id="registerError" class="error"></div>
+              <div id="registerSuccess" class="success"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Login</h2>
+            <form id="loginForm">
+              <label>
+                Email
+                <input type="email" id="loginEmail" placeholder="tuo@email.it" required />
+              </label>
+              <label>
+                Password
+                <input type="password" id="loginPassword" placeholder="Password" required />
+              </label>
+              <button type="submit">Accedi</button>
+              <div id="loginError" class="error"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboardView" class="dashboard">
+      <div class="container">
+        <div class="toolbar">
+          <div>
+            <h2>Registro ore di lavoro</h2>
+          </div>
+          <div class="row">
+            <div id="currentUserBadge" class="user-badge"></div>
+            <button id="logoutBtn" class="secondary" type="button">Logout</button>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <h3>Nuova registrazione</h3>
+            <form id="entryForm">
+              <label>
+                Data
+                <input type="date" id="entryDate" required />
+              </label>
+              <div class="row">
+                <label style="flex:1;">
+                  Ora inizio
+                  <input type="time" id="entryStart" required />
+                </label>
+                <label style="flex:1;">
+                  Ora fine
+                  <input type="time" id="entryEnd" required />
+                </label>
+              </div>
+              <label>
+                Note
+                <input type="text" id="entryNote" placeholder="Es. Sviluppo backend, meeting..." />
+              </label>
+              <button type="submit">Salva ore</button>
+              <div id="entryMessage" class="success"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>Le mie ore</h3>
+            <ul id="userEntriesList" class="entry-list"></ul>
+          </div>
+        </div>
+
+        <div id="adminPanel" class="card hidden" style="margin-top:20px;">
+          <h3>Area admin</h3>
+          <div id="adminTotals"></div>
+
+          <div id="adminEditSection" class="hidden" style="margin-top:18px;">
+            <h3>Modifica voce selezionata</h3>
+            <form id="adminEditForm">
+              <input type="hidden" id="editEntryId" />
+              <label>
+                Utente
+                <select id="editUserSelect"></select>
+              </label>
+              <label>
+                Data
+                <input type="date" id="editDate" required />
+              </label>
+              <div class="row">
+                <label style="flex:1;">
+                  Ora inizio
+                  <input type="time" id="editStart" required />
+                </label>
+                <label style="flex:1;">
+                  Ora fine
+                  <input type="time" id="editEnd" required />
+                </label>
+              </div>
+              <label>
+                Note
+                <input type="text" id="editNote" />
+              </label>
+              <div class="admin-controls">
+                <button type="submit">Salva modifiche</button>
+                <button type="button" id="cancelEditBtn" class="secondary">Annulla</button>
+              </div>
+            </form>
+          </div>
+
+          <div style="margin-top:18px;">
+            <h3>Registro completo</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Utente</th>
+                  <th>Data</th>
+                  <th>Inizio</th>
+                  <th>Fine</th>
+                  <th>Ore</th>
+                  <th>Note</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="adminEntriesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      users: 'workTracker_users',
+      entries: 'workTracker_entries',
+      currentUser: 'workTracker_currentUser'
+    };
+
+    const seedAdmin = {
+      email: 'admin@admin.it',
+      password: 'admin123',
+      role: 'admin'
+    };
+
+    function getUsers() {
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.users) || '[]');
+      if (!users.length) {
+        const seeded = [{ id: crypto.randomUUID(), email: seedAdmin.email, password: seedAdmin.password, role: seedAdmin.role, createdAt: new Date().toISOString() }];
+        localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(seeded));
+        return seeded;
+      }
+      return users;
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+    }
+
+    function getEntries() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.entries) || '[]');
+    }
+
+    function saveEntries(entries) {
+      localStorage.setItem(STORAGE_KEYS.entries, JSON.stringify(entries));
+    }
+
+    function getCurrentUser() {
+      const userId = sessionStorage.getItem(STORAGE_KEYS.currentUser);
+      if (!userId) return null;
+      const users = getUsers();
+      return users.find(u => u.id === userId) || null;
+    }
+
+    function setCurrentUser(userId) {
+      sessionStorage.setItem(STORAGE_KEYS.currentUser, userId);
+    }
+
+    function logout() {
+      sessionStorage.removeItem(STORAGE_KEYS.currentUser);
+      render();
+    }
+
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+
+    function clearError(el) {
+      el.textContent = '';
+      el.classList.remove('show');
+    }
+
+    function clearSuccess(el) {
+      el.textContent = '';
+      el.classList.remove('show');
+    }
+
+    function formatHours(hours) {
+      return Number(hours).toFixed(2) + ' h';
+    }
+
+    function calculateHours(start, end) {
+      const startDate = new Date(`2000-01-01T${start}:00`);
+      const endDate = new Date(`2000-01-01T${end}:00`);
+      if (endDate < startDate) {
+        endDate.setDate(endDate.getDate() + 1);
+      }
+      const diffMs = endDate - startDate;
+      return diffMs / (1000 * 60 * 60);
+    }
+
+    function render() {
+      const currentUser = getCurrentUser();
+      const authView = document.getElementById('authView');
+      const dashboardView = document.getElementById('dashboardView');
+
+      if (!currentUser) {
+        authView.classList.add('visible');
+        dashboardView.classList.remove('visible');
+        return;
+      }
+
+      authView.classList.remove('visible');
+      dashboardView.classList.add('visible');
+
+      document.getElementById('currentUserBadge').textContent = `${currentUser.email} (${currentUser.role})`;
+
+      renderMyEntries(currentUser);
+      renderAdminPanel(currentUser);
+    }
+
+    function renderMyEntries(user) {
+      const entries = getEntries()
+        .filter(e => e.userId === user.id)
+        .sort((a, b) => new Date(b.date + 'T' + b.startTime) - new Date(a.date + 'T' + a.startTime));
+
+      const list = document.getElementById('userEntriesList');
+      list.innerHTML = '';
+
+      if (!entries.length) {
+        list.innerHTML = '<li class="entry-item"><span>Nessuna registrazione trovata.</span></li>';
+        return;
+      }
+
+      entries.forEach(entry => {
+        const item = document.createElement('li');
+        item.className = 'entry-item';
+        const hours = calculateHours(entry.startTime, entry.endTime);
+
+        item.innerHTML = `
+          <div>
+            <strong>${entry.date}</strong><br />
+            <span class="tiny">${entry.startTime} - ${entry.endTime}</span>
+            <div class="tiny">${entry.note || 'Nessuna nota'}</div>
+          </div>
+          <div class="row">
+            <span class="pill">${formatHours(hours)}</span>
+            <button type="button" class="danger" data-delete-entry="${entry.id}">Elimina</button>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      document.querySelectorAll('[data-delete-entry]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const entryId = btn.getAttribute('data-delete-entry');
+          deleteEntry(entryId);
+        });
+      });
+    }
+
+    function deleteEntry(entryId) {
+      const entries = getEntries().filter(e => e.id !== entryId);
+      saveEntries(entries);
+      render();
+    }
+
+    function renderAdminPanel(user) {
+      const adminPanel = document.getElementById('adminPanel');
+      if (user.role !== 'admin') {
+        adminPanel.classList.add('hidden');
+        return;
+      }
+
+      adminPanel.classList.remove('hidden');
+
+      const users = getUsers();
+      const entries = getEntries();
+
+      const totals = {};
+      for (const u of users) {
+        totals[u.id] = { email: u.email, total: 0 };
+      }
+
+      entries.forEach(entry => {
+        const hours = calculateHours(entry.startTime, entry.endTime);
+        if (totals[entry.userId]) totals[entry.userId].total += hours;
+      });
+
+      const totalsHtml = `
+        <div class="summary-list">
+          ${users.map(u => `
+            <div class="entry-item">
+              <strong>${u.email}</strong>
+              <span class="pill">${formatHours(totals[u.id].total)}</span>
+            </div>
+          `).join('')}
+          <div class="entry-item">
+            <strong>Totale complessivo</strong>
+            <span class="pill">${formatHours(Object.values(totals).reduce((sum, u) => sum + u.total, 0))}</span>
+          </div>
+        </div>
+      `;
+      document.getElementById('adminTotals').innerHTML = totalsHtml;
+
+      const editUserSelect = document.getElementById('editUserSelect');
+      editUserSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.email}</option>`).join('');
+
+      const rowsHtml = entries
+        .map(entry => {
+          const userObj = users.find(u => u.id === entry.userId);
+          const hours = calculateHours(entry.startTime, entry.endTime);
+          return `
+            <tr>
+              <td>${userObj ? userObj.email : 'Sconosciuto'}</td>
+              <td>${entry.date}</td>
+              <td>${entry.startTime}</td>
+              <td>${entry.endTime}</td>
+              <td>${formatHours(hours)}</td>
+              <td>${entry.note || '-'}</td>
+              <td>
+                <div class="admin-controls">
+                  <button type="button" class="secondary" data-edit-entry="${entry.id}">Modifica</button>
+                  <button type="button" class="danger" data-delete-admin-entry="${entry.id}">Elimina</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+
+      document.getElementById('adminEntriesTable').innerHTML = rowsHtml;
+
+      document.querySelectorAll('[data-edit-entry]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const entryId = btn.getAttribute('data-edit-entry');
+          fillAdminEditForm(entryId);
+        });
+      });
+
+      document.querySelectorAll('[data-delete-admin-entry]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const entryId = btn.getAttribute('data-delete-admin-entry');
+          deleteEntry(entryId);
+        });
+      });
+    }
+
+    function fillAdminEditForm(entryId) {
+      const entries = getEntries();
+      const entry = entries.find(e => e.id === entryId);
+      if (!entry) return;
+
+      const users = getUsers();
+      const select = document.getElementById('editUserSelect');
+      select.value = entry.userId;
+
+      document.getElementById('editEntryId').value = entry.id;
+      document.getElementById('editDate').value = entry.date;
+      document.getElementById('editStart').value = entry.startTime;
+      document.getElementById('editEnd').value = entry.endTime;
+      document.getElementById('editNote').value = entry.note || '';
+
+      document.getElementById('adminEditSection').classList.remove('hidden');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function setupAuthEvents() {
+      document.getElementById('registerForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+        const password = document.getElementById('registerPassword').value.trim();
+
+        const regErr = document.getElementById('registerError');
+        const regSucc = document.getElementById('registerSuccess');
+
+        clearError(regErr);
+        clearSuccess(regSucc);
+
+        if (!email || !password) {
+          showError(regErr, 'Inserisci email e password.');
+          return;
+        }
+
+        const users = getUsers();
+        const exists = users.some(u => u.email.toLowerCase() === email);
+
+        if (exists) {
+          showError(regErr, 'Utente già registrato.');
+          return;
+        }
+
+        const newUser = {
+          id: crypto.randomUUID(),
+          email,
+          password,
+          role: 'member',
+          createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        saveUsers(users);
+
+        regSucc.textContent = 'Registrazione completata. Ora puoi accedere.';
+        regSucc.classList.add('show');
+
+        document.getElementById('registerForm').reset();
+      });
+
+      document.getElementById('loginForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value.trim();
+        const loginError = document.getElementById('loginError');
+
+        clearError(loginError);
+
+        const users = getUsers();
+        const user = users.find(u => u.email.toLowerCase() === email && u.password === password);
+
+        if (!user) {
+          showError(loginError, 'Credenziali non valide.');
+          return;
+        }
+
+        setCurrentUser(user.id);
+        document.getElementById('loginForm').reset();
+        render();
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+    }
+
+    function setupEntryEvents() {
+      document.getElementById('entryForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const currentUser = getCurrentUser();
+        if (!currentUser) return;
+
+        const date = document.getElementById('entryDate').value;
+        const start = document.getElementById('entryStart').value;
+        const end = document.getElementById('entryEnd').value;
+        const note = document.getElementById('entryNote').value.trim();
+
+        const msg = document.getElementById('entryMessage');
+
+        if (!date || !start || !end) {
+          msg.textContent = 'Inserisci data, ora di inizio e ora di fine.';
+          msg.classList.add('show');
+          return;
+        }
+
+        const endTime = new Date(`2000-01-01T${end}:00`);
+        const startTime = new Date(`2000-01-01T${start}:00`);
+
+        if (endTime < startTime) {
+          msg.textContent = 'L\'ora di fine non può essere precedente all\'ora di inizio.';
+          msg.classList.add('show');
+          return;
+        }
+
+        const entries = getEntries();
+        entries.push({
+          id: crypto.randomUUID(),
+          userId: currentUser.id,
+          date,
+          startTime: start,
+          endTime: end,
+          note,
+          createdAt: new Date().toISOString()
+        });
+
+        saveEntries(entries);
+        document.getElementById('entryForm').reset();
+        msg.textContent = 'Ora salvata correttamente.';
+        msg.classList.add('show');
+        render();
+      });
+
+      document.getElementById('adminEditForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const entryId = document.getElementById('editEntryId').value;
+        const userId = document.getElementById('editUserSelect').value;
+        const date = document.getElementById('editDate').value;
+        const start = document.getElementById('editStart').value;
+        const end = document.getElementById('editEnd').value;
+        const note = document.getElementById('editNote').value.trim();
+
+        if (!entryId || !date || !start || !end) return;
+
+        const endTime = new Date(`2000-01-01T${end}:00`);
+        const startTime = new Date(`2000-01-01T${start}:00`);
+
+        if (endTime < startTime) {
+          alert('L\'ora di fine non può essere precedente all\'ora di inizio.');
+          return;
+        }
+
+        const entries = getEntries();
+        const index = entries.findIndex(e => e.id === entryId);
+        if (index >= 0) {
+          entries[index] = { ...entries[index], userId, date, startTime: start, endTime: end, note };
+          saveEntries(entries);
+          document.getElementById('adminEditSection').classList.add('hidden');
+          render();
+        }
+      });
+
+      document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        document.getElementById('adminEditSection').classList.add('hidden');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      getUsers();
+      setupAuthEvents();
+      setupEntryEvents();
+      render();
+    });
+  </script>
+</body>
+</html>
